@@ -1,0 +1,14 @@
+{
+    "gameDir": "/home/rupakchaulagain/.minecraft",
+    "instances": [
+        {
+            "name": "FabricGamePlay",
+            "version": "1.21.4",
+            "loader": "fabric",
+            "enabledMods": [],
+            "disabledMods": [],
+            "resourcePacks": [],
+            "createdAt": "2025-01-20T17:57:25.147464"
+        }
+    ]
+}

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ instance['name'] }} - YAMIM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#121212] text-[#EAEAEA] font-sans p-8">
+
+    <div class="w-full align-center">
+
+        <h2 class="text-3xl font-bold mb-6 text-center">Instance: {{ instance['name'] }}</h2>
+
+
+        <!-- Top Buttons -->
+
+        <div class="top-buttons flex justify-between content-center p-4">
+
+            <a href="{{ url_for('index') }}"
+                class="bg-[#3CB371] rounded-lg text-white hover:bg-[#2a9d58] transition-all p-4">
+                Back to Instances List
+            </a>
+
+            <form action="{{ url_for('deleteInstance', instance_name=instance['name']) }}" method="post">
+                <button type="submit" class="bg-red-600 text-white  rounded-lg hover:bg-red-700 transition-all p-4">
+                    Delete
+                </button>
+            </form>
+
+        </div>
+
+
+        <!-- Instance Details -->
+        <div class="bg-[#2C2C2C] p-4 rounded-lg shadow-lg border border-[#3CB371]">
+            <h3 class="text-2xl font-semibold mb-4">Instance Details</h3>
+            <div>
+                <p>Game Version: {{ instance['version'] }}</p>
+                <p>Created At: {{ instance['createdAt']}}</p>
+            </div>
+        </div>
+        
+    </div>
+
+
+    <div class="flex flex-wrap w-full gap-auto">
+        <!-- Modrinth Mod Search -->
+        <div class="bg-[#2C2C2C] p-4 rounded-lg shadow-lg border border-[#3CB371] mt-4 w-1/3">
+            <h3 class="text-2xl font-semibold mb-4">Search for Mods (Modrinth)</h3>
+            <input type="text" name="modSearch" placeholder="Enter Mod Name"
+                class="mod-search w-full p-3 bg-[#2C2C2C] border border-[#3CB371] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3CB371]"
+                required>
+    
+            <div class="search-results">
+            </div>
+        </div>
+    
+        <!-- Installed Mods Section -->
+        <div class="bg-[#2C2C2C] p-4 rounded-lg shadow-lg border border-[#3CB371] mt-4 w-1/3">
+            <h3 class="text-2xl font-semibold mb-4">Installed Mods</h3>
+            <div class="space-y-4">
+                {% for mod in instance['enabledMods'] %}
+                <div class="flex justify-between items-center bg-[#3CB371] p-4 rounded-lg">
+                    <span>{{ mod }}</span>
+                    <button class="bg-[#007BFF] text-white px-4 py-2 rounded-lg hover:bg-[#0056b3] transition-all">
+                        Toggle
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    
+        <!-- Installed Resource Packs Section -->
+        <div class="bg-[#2C2C2C] p-4 rounded-lg shadow-lg border border-[#3CB371] mt-4 w-1/3">
+            <h3 class="text-2xl font-semibold mb-4">Installed Resource Packs</h3>
+            <div class="space-y-4">
+                {% for resourcePack in instance['resourcePacks'] %}
+                <div class="flex justify-between items-center bg-[#3CB371] p-4 rounded-lg">
+                    <span>{{ resourcePack }}</span>
+                    <button class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all">
+                        Delete
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</body>
+
+
+<script>
+
+const modrinthApiBaseUrl = "https://api.modrinth.com/v2";
+
+window.addEventListener("DOMContentLoaded", async () => {
+    const searchResultsDiv = document.querySelector(".search-results");
+
+    try {
+        // Fetch data from Modrinth API
+        const response = await fetch(`${modrinthApiBaseUrl}/search?type=mod&categories=fabric`);
+        if (!response.ok) {
+            alert("Something went wrong while fetching data from Modrinth!");
+            return;
+        }
+
+        const responseJson = await response.json();
+
+        // Loop through the mods and create cards
+        responseJson.hits.forEach(mod => {
+            // Create the card container
+            const modCard = document.createElement("div");
+            modCard.classList.add("bg-[#2C2C2C]", "p-4", "rounded-lg", "shadow-lg", "border", "border-[#3CB371]", "flex", "items-center", "justify-between");
+
+            // Create the mod details (icon, title, description)
+            const modDetails = document.createElement("div");
+            modDetails.classList.add("flex", "items-center", "space-x-4");
+
+            // Mod Icon
+            const modIcon = document.createElement("img");
+            modIcon.setAttribute("src", mod.icon_url || "https://via.placeholder.com/40");
+            modIcon.classList.add("h-10", "w-10", "rounded-lg");
+
+            // Mod Title and Description
+            const modInfo = document.createElement("div");
+            const modTitle = document.createElement("h4");
+            modTitle.textContent = mod.title;
+            modTitle.classList.add("text-lg", "font-semibold", "text-white");
+
+            const modDescription = document.createElement("p");
+            modDescription.textContent = mod.description;
+            modDescription.classList.add("text-sm", "text-gray-400");
+
+            modInfo.appendChild(modTitle);
+            modInfo.appendChild(modDescription);
+
+            modDetails.appendChild(modIcon);
+            modDetails.appendChild(modInfo);
+
+            // Download Button
+            const downloadButton = document.createElement("a");
+            downloadButton.textContent = "Download";
+            downloadButton.href = `https://modrinth.com/mod/${mod.slug}`;
+            downloadButton.target = "_blank";
+            downloadButton.classList.add(
+                "bg-[#3CB371]",
+                "text-white",
+                "px-4",
+                "py-2",
+                "rounded-lg",
+                "hover:bg-[#2a9d58]",
+                "transition-all"
+            );
+
+            // Append details and button to the card
+            modCard.appendChild(modDetails);
+            modCard.appendChild(downloadButton);
+
+            // Append the card to the results container
+            searchResultsDiv.appendChild(modCard);
+        });
+    } catch (error) {
+        alert("Error: " + error.message);
+    }
+});
+
+</script>
+
+</html>

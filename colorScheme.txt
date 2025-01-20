@@ -1,0 +1,26 @@
+
+# Color Scheme for Dark Mode
+
+Background Color:
+  Body Background: #121212 (Dark background for the body)
+  
+Text Color:
+  Primary Text Color: #EAEAEA (Light text on dark background)
+  
+Input Fields:
+  Background Color: #2C2C2C (Dark input field)
+  Border Color: #3CB371 (Green border color)
+  Focus Border Color: #3CB371 (Green focus color)
+
+Button:
+  Button Background Color: #3CB371 (Primary green color)
+  Button Text Color: #FFFFFF (White text)
+  Button Hover Background Color: #2C8B63 (Darker green when hovering)
+  
+Footer:
+  Footer Text Color: #EAEAEA (Light text in footer)
+  Footer Link Color: #3CB371 (Green link color)
+  Footer Link Hover Color: #2C8B63 (Darker green link color on hover)
+
+ERROR / WARNING:
+  #D32F2F
