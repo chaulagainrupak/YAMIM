@@ -359,46 +359,92 @@ def searchModrinth():
     return jsonify({"hits": []})
 
 
-@app.route("/installMod", methods=["POST"])
-def installMod():
-    data = request.get_json()
-    modId = data.get("modId")
-    modName = data.get("modName")
+@app.route("/installMod/<mod_id>/<instance_name>", methods=["POST"])
+def installMod(mod_id, instance_name):
+    try:
+        # Fetch basic mod details (title, icon, loaders)
+        mod_details_url = f"https://api.modrinth.com/v2/project/{mod_id}"
+        mod_details_response = requests.get(mod_details_url)
+        if mod_details_response.status_code != 200:
+            return jsonify({"status": "error", "message": "Failed to fetch mod details."})
 
-    # Get the mod details from Modrinth using the mod ID
-    mod_details_url = f"https://api.modrinth.com/api/v1/project/{modId}"
-    response = requests.get(mod_details_url)
+        mod_details = mod_details_response.json()
+        mod_name = mod_details["title"]
+        mod_icon_url = mod_details.get("icon_url", "")
+        mod_loaders = mod_details.get("categories", [])
 
-    if response.status_code == 200:
-        mod_data = response.json()
-        mod_filename = mod_data['versions'][0]['files'][0]['filename']  # Get the filename for the mod
+        # Fetch mod version details
+        mod_version_url = f"https://api.modrinth.com/v2/project/{mod_id}/version"
+        mod_version_response = requests.get(mod_version_url)
+        if mod_version_response.status_code != 200:
+            return jsonify({"status": "error", "message": "Failed to fetch mod version details."})
 
-        # Example directory where mods will be installed (this should be adjusted based on your setup)
-        instance_dir = os.path.join(gameDir, "YAMIM", instance_name)
-        mod_dir = os.path.join(instance_dir, "mods")
+        mod_versions = mod_version_response.json()
 
-        # Download the mod file
-        mod_url = f"https://cdn.modrinth.com/{mod_data['versions'][0]['files'][0]['url']}"
-        mod_response = requests.get(mod_url)
-        mod_path = os.path.join(mod_dir, mod_filename)
-        with open(mod_path, 'wb') as f:
-            f.write(mod_response.content)
-
-        # Add mod to the config file
+        # Load the config file
         with open(configFile, "r") as f:
             config = json.load(f)
-        
-        instance_to_edit = next((instance for instance in config["instances"] if instance["name"] == instance_name), None)
-        
-        if instance_to_edit:
-            instance_to_edit["enabledMods"][modName] = mod_filename
-        
+
+        # Locate the instance
+        instance = next((inst for inst in config["instances"] if inst["name"] == instance_name), None)
+        if not instance:
+            return jsonify({"status": "error", "message": f"Instance '{instance_name}' not found."})
+
+        instance_version = instance["version"]
+        instance_loader = instance["loader"]
+
+        # Check for modloader compatibility
+        if instance_loader not in mod_loaders:
+            return jsonify({"status": "error", "message": f"Mod '{mod_name}' is not compatible with the '{instance_loader}' loader."})
+
+        # Match mod's supported versions with the instance's version
+        compatible_version = next(
+            (version for version in mod_versions if instance_version in version["game_versions"]), None
+        )
+        if not compatible_version:
+            return jsonify({"status": "error", "message": "No compatible version found for the instance."})
+
+        # Get the mod file details
+        file_details = compatible_version["files"][0]
+        mod_url = file_details["url"]
+        mod_filename = file_details["filename"]
+
+        # Check if the mod is already in enabledMods
+        if any(mod["modId"] == mod_id for mod in instance["enabledMods"]):
+            return jsonify({"status": "info", "message": f"Mod '{mod_name}' is already installed."})
+
+        # Prepare paths
+        instance_dir = os.path.join(gameDir, "YAMIM", instance_name)
+        mod_dir = os.path.join(instance_dir, "mods")
+        os.makedirs(mod_dir, exist_ok=True)
+
+        # Download the mod file
+        mod_path = os.path.join(mod_dir, mod_filename)
+        mod_response = requests.get(mod_url)
+        if mod_response.status_code == 200:
+            with open(mod_path, "wb") as f:
+                f.write(mod_response.content)
+        else:
+            return jsonify({"status": "error", "message": "Failed to download the mod file."})
+
+        # Add the mod to the enabledMods
+        mod_entry = {
+            "modId": mod_id,
+            "modJar": mod_filename,
+            "modName": mod_name,
+            "modIcon": mod_icon_url
+        }
+        instance["enabledMods"].append(mod_entry)
+
+        # Save the updated configuration
         with open(configFile, "w") as f:
             json.dump(config, f, indent=4)
 
-        return jsonify({"status": "success", "message": f"{modName} installed!"})
+        return jsonify({"status": "success", "message": f"Mod '{mod_name}' installed successfully!"})
 
-    return jsonify({"status": "error", "message": "Failed to fetch mod details."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
 
 
 if __name__ == "__main__":

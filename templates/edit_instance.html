@@ -12,7 +12,7 @@
 
     <div class="w-full align-center">
 
-        <h2 class="text-3xl font-bold mb-6 text-center">Instance: {{ instance['name'] }}</h2>
+        <h2 class="text-3xl font-bold mb-6 text-center">Instance: <span class="instance-name">{{ instance['name'] }}</span></h2>
 
 
         <!-- Top Buttons -->
@@ -140,11 +140,11 @@ window.addEventListener("DOMContentLoaded", async () => {
             modDetails.appendChild(modInfo);
 
             // Download Button
-            const downloadButton = document.createElement("a");
+            const downloadButton = document.createElement("button");
             downloadButton.textContent = "Download";
-            downloadButton.href = `https://modrinth.com/mod/${mod.slug}`;
-            downloadButton.target = "_blank";
+            downloadButton.setAttribute("onclick", `installMod('${mod.project_id}')`);
             downloadButton.classList.add(
+                "download-mod",
                 "bg-[#3CB371]",
                 "text-white",
                 "px-4",
@@ -165,6 +165,22 @@ window.addEventListener("DOMContentLoaded", async () => {
         alert("Error: " + error.message);
     }
 });
+
+async function installMod(modId){
+    
+    try{
+        const response = await fetch(`/installMod/${modId}/${document.querySelector('.instance-name').innerHTML}`,{
+            "method": "POST"
+        });
+
+        if (response){
+            alert(response.json());
+        }
+    }
+
+    catch (error){
+    }
+}
 
 </script>
 
