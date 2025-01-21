@@ -371,7 +371,7 @@ def installMod(mod_id, instance_name):
         mod_details = mod_details_response.json()
         mod_name = mod_details["title"]
         mod_icon_url = mod_details.get("icon_url", "")
-        mod_loaders = mod_details.get("categories", [])
+        mod_loaders = mod_details.get("loaders", [])
 
         # Fetch mod version details
         mod_version_url = f"https://api.modrinth.com/v2/project/{mod_id}/version"
@@ -399,7 +399,7 @@ def installMod(mod_id, instance_name):
 
         # Match mod's supported versions with the instance's version
         compatible_version = next(
-            (version for version in mod_versions if instance_version in version["game_versions"]), None
+            (version for version in mod_versions if instance_version in version["game_versions"] and instance_loader in version["loaders"]), None
         )
         if not compatible_version:
             return jsonify({"status": "error", "message": "No compatible version found for the instance."})

@@ -11,6 +11,18 @@
                     "modJar": "fabric-api-0.114.3+1.21.4.jar",
                     "modName": "Fabric API",
                     "modIcon": "https://cdn.modrinth.com/data/P7dR8mSH/icon.png"
+                },
+                {
+                    "modId": "AANobbMI",
+                    "modJar": "sodium-neoforge-0.6.6+mc1.21.4.jar",
+                    "modName": "Sodium",
+                    "modIcon": "https://cdn.modrinth.com/data/AANobbMI/295862f4724dc3f78df3447ad6072b2dcd3ef0c9_96.webp"
+                },
+                {
+                    "modId": "YL57xq9U",
+                    "modJar": "iris-fabric-1.8.5+mc1.21.4.jar",
+                    "modName": "Iris Shaders",
+                    "modIcon": "https://cdn.modrinth.com/data/YL57xq9U/18d0e7f076d3d6ed5bedd472b853909aac5da202_96.webp"
                 }
             ],
             "disabledMods": [],
