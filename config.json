@@ -23,11 +23,31 @@
                     "modJar": "iris-fabric-1.8.5+mc1.21.4.jar",
                     "modName": "Iris Shaders",
                     "modIcon": "https://cdn.modrinth.com/data/YL57xq9U/18d0e7f076d3d6ed5bedd472b853909aac5da202_96.webp"
+                },
+                {
+                    "modId": "uXXizFIs",
+                    "modJar": "ferritecore-7.1.1-fabric.jar",
+                    "modName": "FerriteCore",
+                    "modIcon": "https://cdn.modrinth.com/data/uXXizFIs/222a126f26f8f9ae1eb339f3b767677f18bff31f_96.webp"
                 }
             ],
             "disabledMods": [],
             "resourcePacks": [],
-            "createdAt": "2025-01-20T17:57:25.147464"
+            "createdAt": "2025-01-20T17:57:25.147464",
+            "enabledResourcePacks": [
+                {
+                    "resourcePackId": "50dA9Sha",
+                    "resourcePackFile": "FreshAnimations_v1.9.3.zip",
+                    "resourcePackName": "Fresh Animations",
+                    "resourcePackIcon": "https://cdn.modrinth.com/data/50dA9Sha/d5f379581096db483bd2181ab982d9270b17feb7_96.webp"
+                },
+                {
+                    "resourcePackId": "slufHzC2",
+                    "resourcePackFile": "+1.21.3 Fresh Moves v3.1.1 (With Animated Eyes).zip",
+                    "resourcePackName": "Fresh Moves",
+                    "resourcePackIcon": "https://cdn.modrinth.com/data/slufHzC2/02b78db6655ad8dd6cfd847f99c76f7552c053ec_96.webp"
+                }
+            ]
         }
     ]
 }

@@ -340,25 +340,6 @@ def deleteInstance(instance_name):
     return redirect(url_for("index"))
 
 
-@app.route("/searchModrinth", methods=["GET"])
-def searchModrinth():
-    query = request.args.get("query")
-    if not query:
-        return jsonify({"hits": []})
-    
-    # Request to Modrinth API
-    url = f"https://api.modrinth.com/api/v1/search"
-    params = {
-        "query": query,
-        "limit": 5,
-        "facets": "categories:mod"
-    }
-    response = requests.get(url, params=params)
-    if response.status_code == 200:
-        return jsonify(response.json())
-    return jsonify({"hits": []})
-
-
 @app.route("/installMod/<mod_id>/<instance_name>", methods=["POST"])
 def installMod(mod_id, instance_name):
     try:
@@ -441,6 +422,87 @@ def installMod(mod_id, instance_name):
             json.dump(config, f, indent=4)
 
         return jsonify({"status": "success", "message": f"Mod '{mod_name}' installed successfully!"})
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route("/installResourcePack/<resourcepack_id>/<instance_name>", methods=["POST"])
+def installResourcePack(resourcepack_id, instance_name):
+    try:
+        # Fetch basic resource pack details (title, icon, and compatibility)
+        resourcepack_details_url = f"https://api.modrinth.com/v2/project/{resourcepack_id}"
+        resourcepack_details_response = requests.get(resourcepack_details_url)
+        if resourcepack_details_response.status_code != 200:
+            return jsonify({"status": "error", "message": "Failed to fetch resource pack details."})
+
+        resourcepack_details = resourcepack_details_response.json()
+        resourcepack_name = resourcepack_details["title"]
+        resourcepack_icon_url = resourcepack_details.get("icon_url", "")
+
+        # Fetch resource pack version details
+        resourcepack_version_url = f"https://api.modrinth.com/v2/project/{resourcepack_id}/version"
+        resourcepack_version_response = requests.get(resourcepack_version_url)
+        if resourcepack_version_response.status_code != 200:
+            return jsonify({"status": "error", "message": "Failed to fetch resource pack version details."})
+
+        resourcepack_versions = resourcepack_version_response.json()
+
+        # Load the config file
+        with open(configFile, "r") as f:
+            config = json.load(f)
+
+        # Locate the instance
+        instance = next((inst for inst in config["instances"] if inst["name"] == instance_name), None)
+        if not instance:
+            return jsonify({"status": "error", "message": f"Instance '{instance_name}' not found."})
+
+        instance_version = instance["version"]
+
+        # Match resource pack's supported versions with the instance's version
+        compatible_version = next(
+            (version for version in resourcepack_versions if instance_version in version["game_versions"]), None
+        )
+        if not compatible_version:
+            return jsonify({"status": "error", "message": "No compatible version found for the instance."})
+
+        # Get the resource pack file details
+        file_details = compatible_version["files"][0]
+        resourcepack_url = file_details["url"]
+        resourcepack_filename = file_details["filename"]
+
+        # Check if the resource pack is already in enabledResourcePacks
+        if any(rp["resourcePackId"] == resourcepack_id for rp in instance.get("enabledResourcePacks", [])):
+            return jsonify({"status": "info", "message": f"Resource pack '{resourcepack_name}' is already installed."})
+
+        # Prepare paths
+        instance_dir = os.path.join(gameDir, "YAMIM", instance_name)
+        resourcepack_dir = os.path.join(instance_dir, "resourcepacks")
+        os.makedirs(resourcepack_dir, exist_ok=True)
+
+        # Download the resource pack file
+        resourcepack_path = os.path.join(resourcepack_dir, resourcepack_filename)
+        resourcepack_response = requests.get(resourcepack_url)
+        if resourcepack_response.status_code == 200:
+            with open(resourcepack_path, "wb") as f:
+                f.write(resourcepack_response.content)
+        else:
+            return jsonify({"status": "error", "message": "Failed to download the resource pack file."})
+
+        # Add the resource pack to the enabledResourcePacks
+        resourcepack_entry = {
+            "resourcePackId": resourcepack_id,
+            "resourcePackFile": resourcepack_filename,
+            "resourcePackName": resourcepack_name,
+            "resourcePackIcon": resourcepack_icon_url
+        }
+        instance.setdefault("enabledResourcePacks", []).append(resourcepack_entry)
+
+        # Save the updated configuration
+        with open(configFile, "w") as f:
+            json.dump(config, f, indent=4)
+
+        return jsonify({"status": "success", "message": f"Resource pack '{resourcepack_name}' installed successfully!"})
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})

@@ -54,6 +54,9 @@
                 class="mod-search w-full p-3 bg-[#2C2C2C] border border-[#3CB371] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3CB371]"
                 required>
 
+            <div>
+                <h1 class="text-2xl"><span class="search-count text-[#3CB371]"></span> Items Returned!</h1>
+            </div>
             <div class="search-results">
             </div>
         </div>
@@ -100,7 +103,7 @@
     window.addEventListener("DOMContentLoaded", async () => {
 
         try {
-                searchMod("none");
+            searchMod("none");
         } catch (error) {
             alert("Error: " + error.message);
         }
@@ -108,7 +111,7 @@
 
 
     window.addEventListener("input", async () => {
-        
+
         searchMod(modSearchField.value);
     });
 
@@ -128,19 +131,39 @@
         }
     }
 
+    async function installResourcePack(modId) {
+
+        try {
+            const response = await fetch(`/installResourcePack/${modId}/${document.querySelector('.instance-name').innerHTML}`, {
+                "method": "POST"
+            });
+
+            if (response) {
+                alert(JSON.stringify(await response.json()));
+            }
+        }
+
+        catch (error) {
+        }
+    }
+
+
     async function searchMod(modQuery) {
-        
+
         try {
 
             const searchResultsDiv = document.querySelector(".search-results");
+
+            const searchCountSpan = document.querySelector('.search-count');
+            searchCountSpan.innerHTML = '0';
 
             searchResultsDiv.innerHTML = ''
             var response;
             // Fetch data from Modrinth API
 
-            if (modQuery != 'none'){
+            if (modQuery != 'none') {
                 response = await fetch(`${modrinthApiBaseUrl}/search?query=${modQuery}}`);
-            }else{
+            } else {
                 response = await fetch(`${modrinthApiBaseUrl}/search`);
             }
 
@@ -150,6 +173,7 @@
             }
 
             const responseJson = await response.json();
+            searchCountSpan.innerHTML = responseJson.hits.length;
 
             // Loop through the mods and create cards
             responseJson.hits.forEach(mod => {
@@ -163,7 +187,7 @@
 
                 // Mod Icon
                 const modIcon = document.createElement("img");
-                modIcon.setAttribute("src", mod.icon_url || "https://via.placeholder.com/40");
+                modIcon.setAttribute("src", mod.icon_url);
                 modIcon.classList.add("h-10", "w-10", "rounded-lg");
 
                 // Mod Title and Description
@@ -192,11 +216,17 @@
 
                 // Add project type badge
                 const projectTypeBadge = document.createElement("span");
+                const colors = {
+                    'mod': 'bg-blue-500',
+                    'resourcepack': 'bg-red-500',
+                };
+
+                console.log(mod.project_type)
                 projectTypeBadge.textContent = mod.project_type === "mod" ? "Mod" : "Resource Pack";
                 projectTypeBadge.classList.add(
                     "text-xs",
                     "text-white",
-                    "bg-blue-500",
+                    colors[mod.project_type],
                     "px-2",
                     "py-1",
                     "rounded-full",
@@ -216,7 +246,13 @@
                 // Download Button
                 const downloadButton = document.createElement("button");
                 downloadButton.textContent = "Download";
-                downloadButton.setAttribute("onclick", `installMod('${mod.project_id}')`);
+
+
+                if (mod.project_type == 'mod') {
+                    downloadButton.setAttribute("onclick", `installMod('${mod.project_id}')`);
+                } else {
+                    downloadButton.setAttribute("onclick", `installResourcePack('${mod.project_id}')`);
+                }
                 downloadButton.classList.add(
                     "download-mod",
                     "bg-[#3CB371]",
@@ -235,9 +271,9 @@
                 // Append the card to the results container
                 searchResultsDiv.appendChild(modCard);
             });
-                            
-                            
-        }catch (error){
+
+
+        } catch (error) {
             console.log(error)
         }
     }
