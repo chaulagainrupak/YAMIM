@@ -95,13 +95,55 @@
 <script>
 
     const modrinthApiBaseUrl = "https://api.modrinth.com/v2";
+    const modSearchField = document.querySelector('.mod-search');
 
     window.addEventListener("DOMContentLoaded", async () => {
-        const searchResultsDiv = document.querySelector(".search-results");
 
         try {
+                searchMod("none");
+        } catch (error) {
+            alert("Error: " + error.message);
+        }
+    });
+
+
+    window.addEventListener("input", async () => {
+        
+        searchMod(modSearchField.value);
+    });
+
+    async function installMod(modId) {
+
+        try {
+            const response = await fetch(`/installMod/${modId}/${document.querySelector('.instance-name').innerHTML}`, {
+                "method": "POST"
+            });
+
+            if (response) {
+                alert(JSON.stringify(await response.json()));
+            }
+        }
+
+        catch (error) {
+        }
+    }
+
+    async function searchMod(modQuery) {
+        
+        try {
+
+            const searchResultsDiv = document.querySelector(".search-results");
+
+            searchResultsDiv.innerHTML = ''
+            var response;
             // Fetch data from Modrinth API
-            const response = await fetch(`${modrinthApiBaseUrl}/search?type=mod&categories=fabric`);
+
+            if (modQuery != 'none'){
+                response = await fetch(`${modrinthApiBaseUrl}/search?query=${modQuery}}`);
+            }else{
+                response = await fetch(`${modrinthApiBaseUrl}/search`);
+            }
+
             if (!response.ok) {
                 alert("Something went wrong while fetching data from Modrinth!");
                 return;
@@ -193,24 +235,10 @@
                 // Append the card to the results container
                 searchResultsDiv.appendChild(modCard);
             });
-        } catch (error) {
-            alert("Error: " + error.message);
-        }
-    });
-
-    async function installMod(modId) {
-
-        try {
-            const response = await fetch(`/installMod/${modId}/${document.querySelector('.instance-name').innerHTML}`, {
-                "method": "POST"
-            });
-
-            if (response) {
-                alert(JSON.stringify(await response.json()));
-            }
-        }
-
-        catch (error) {
+                            
+                            
+        }catch (error){
+            console.log(error)
         }
     }
 
